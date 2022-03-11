@@ -86,6 +86,7 @@ if __name__ ==  '__main__':
 
 >>> {'id': 288, 'result': 4.001649856567383, 'component_1': 0.0, 'component_2': 0.0, 'mode': 'rear', 'units': 'metric', 'low_battery': False, 'temperature_warning': False, 'laser_on': False}
 >>> {'id': 289, 'result': 3.888049840927124, 'component_1': 0.0, 'component_2': 0.0, 'mode': 'rear', 'units': 'metric', 'low_battery': False, 'temperature_warning': False, 'laser_on': False}
+>>> ...
 ```
 
 ## Run sandbox

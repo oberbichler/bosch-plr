@@ -33,7 +33,7 @@ asyncio.set_event_loop(loop)
 async def main():
   device = Device()
 
-  await device.connect('00:13:43:c4:04:14')
+  await device.connect('<mac-address of the device>')
 
   info = await device.info()
   

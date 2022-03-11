@@ -26,11 +26,12 @@ def device_found(info):
     
     device_list.addItem(name, address)
 
-def device_selected(_):
+@asyncSlot()
+async def device_selected(_):
     global device
     
     if device is not None:
-        device.disconnect()
+        await device.disconnect()
     
     address = device_list.currentData()
 
@@ -40,7 +41,7 @@ def device_selected(_):
     device.disconnected.connect(disconnected)
     device.received_measurement.connect(received_measurement)
 
-    device.connect(address)
+    await device.connect(address)
 
 def connected():
     print('connected')

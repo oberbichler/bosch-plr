@@ -241,16 +241,41 @@ class Device(QObject):
         self._resolves = []
 
         self._socket = QBluetoothSocket(QBluetoothServiceInfo.Protocol.RfcommProtocol)
-        self._socket.connected.connect(lambda : self.connected.emit())
+        self._socket.connected.connect(lambda: self.connected.emit())
         self._socket.disconnected.connect(lambda: self.disconnected.emit())
         self._socket.readyRead.connect(self._ready_read)
         self._socket.errorOccurred.connect(self.error_occured)
 
     def connect(self, address, port=0x0005):
+        future = asyncio.Future()
+
+        def callback():
+            future.set_result(None)
+            self._socket.connected.disconnect(callback)
+
+        self._socket.connected.connect(callback)
+
         self._socket.connectToService(QBluetoothAddress(address), port)
 
+        return future
+
     def disconnect(self):
+        future = asyncio.Future()
+
+        if not self._socket.isOpen():
+            future.set_result(None)
+            return future
+
+        def callback():
+            future.set_result(None)
+            self._socket.disconnected.disconnect(callback)
+
+        self._socket.disconnected.connect(callback)
+
+        self._socket.close()
         self._socket.disconnect()
+
+        return future
 
     def error_occured(self, error):
         msg = self._socket.errorString()

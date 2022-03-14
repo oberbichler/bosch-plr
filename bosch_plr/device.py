@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from bosch_plr.checksum import crc8, crc32
 
 from PyQt6.QtBluetooth import QBluetoothSocket, QBluetoothServiceInfo, QBluetoothAddress
@@ -148,45 +150,45 @@ def parse_frame(msg):
     return frame
 
 def parse_exchange_data(data):
-    result = {}
+    result = ExchangeData()
 
     dev_mode_ref = data[0]
     dev_status = data[1]
     
-    result['id'], = struct.unpack('<H', data[2:4])
-    result['result'], = struct.unpack('f', data[4:8])
-    result['component_1'], = struct.unpack('f', data[8:12])
-    result['component_2'], = struct.unpack('f', data[12:16])
+    result.id = struct.unpack('<H', data[2:4])[0]
+    result.result = struct.unpack('f', data[4:8])[0]
+    result.component_1 = struct.unpack('f', data[8:12])[0]
+    result.component_2 = struct.unpack('f', data[12:16])[0]
 
     mode10 = dev_mode_ref & 0b00000011
 
     if mode10 == 0:
-        result['mode'] = 'front'
+        result.mode = 'front'
     elif mode10 == 1:
-        result['mode'] = 'tripod'
+        result.mode = 'tripod'
     elif mode10 == 2:
-        result['mode'] = 'rear'
+        result.mode = 'rear'
     elif mode10 == 3:
-        result['mode'] = 'pin'
+        result.mode = 'pin'
 
     mode3 = dev_status & 0b00001000
 
     if mode3 != 0:
-        result['units'] = 'imperial'
+        result.units = 'imperial'
     else:
-        result['units'] = 'metric'
+        result.units = 'metric'
     
     status2 = dev_status & 0b00000100
 
-    result['low_battery'] = status2 != 0
+    result.low_battery = status2 != 0
 
     status1 = dev_status & 0b00000010
     
-    result['temperature_warning'] = status1 != 0
+    result.temperature_warning = status1 != 0
 
     status0 = dev_status & 0b00000001
     
-    result['laser_on'] = status0 != 0
+    result.laser_on = status0 != 0
     
     return result
 
@@ -230,15 +232,28 @@ def request(msg):
     return fn
 
 
+class ExchangeData:
+    id: int
+    result: float
+    component_1: float
+    component_2: float
+    mode: Literal['front', 'tripod', 'rear', 'pin']
+    units: Literal['metric', 'imperial']
+    low_battery: bool
+    temperature_warning: bool
+    laser_on: bool
+
+
 class Device(QObject):
     connected = pyqtSignal()
     disconnected = pyqtSignal()
-    received_measurement = pyqtSignal(dict)
+    received_measurement = pyqtSignal(ExchangeData)
 
     def __init__(self):
         super().__init__()
 
         self._resolves = []
+        self._pending = []
 
         self._socket = QBluetoothSocket(QBluetoothServiceInfo.Protocol.RfcommProtocol)
         self._socket.connected.connect(lambda: self.connected.emit())
@@ -303,6 +318,10 @@ class Device(QObject):
             if cmd == 85:
                 exchange_data = parse_exchange_data(frame['data'])
                 self.received_measurement.emit(exchange_data)
+
+                if len(self._pending) > 0:
+                    pending = self._pending.pop()
+                    pending.set_result(exchange_data)
             else:
                 print(f'Command {cmd} not supported.')
 

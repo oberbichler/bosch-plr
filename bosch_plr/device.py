@@ -4,9 +4,14 @@ from bosch_plr.checksum import crc8, crc32
 
 from PyQt6.QtBluetooth import QBluetoothSocket, QBluetoothServiceInfo, QBluetoothAddress
 from PyQt6.QtCore import pyqtSignal, QObject
+from PyQt6.QtWidgets import QApplication
+
+from qasync import QEventLoop
 
 import asyncio
 import struct
+from collections.abc import Awaitable
+from typing import Literal
 
 
 def create_request(msg):
@@ -357,3 +362,31 @@ class Device(QObject):
     @request('C0 55 02 01 00')
     def begin_receive(self, data):
         return parse_exchange_data(data)
+
+    def user_measure(self) -> Awaitable[ExchangeData]:
+        future = asyncio.Future()
+        self._pending.append(future)
+        return future
+
+    @staticmethod
+    def run(address, port=0x0005):
+        def decorator(fn):
+            def runner(*args, **kwargs):
+                app = QApplication([])
+
+                loop = QEventLoop(app)
+                asyncio.set_event_loop(loop)
+
+                device = Device()
+
+                async def program():
+                    await device.connect(address, port)
+                    await device.begin_recive()
+                    await fn(device, *args, **kwargs)
+                    await device.disconnect()
+                
+                loop.run_until_complete(program())
+
+            return runner
+
+        return decorator

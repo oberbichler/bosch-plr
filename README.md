@@ -16,9 +16,28 @@ The interface uses the Bluetooth module from [PyQt5](https://pypi.org/project/Py
 
 ## Examples
 
-### Trigger measurement from PC
+### Trigger measurement from device
 
 The interface taskes advantage of `async/await`.
+
+```python
+from bosch_plr import Device
+
+@Device.run('00:13:43:c4:04:14')
+async def main(device: Device):
+  for i in range(4):
+    data = await device.user_measure()  # waits for the user to measure a distance with the device
+    print(data.result)
+
+if __name__ ==  '__main__':
+  main()
+
+>>> 4.001649856567383
+>>> 3.888049840927124
+>>> ...
+```
+
+### Trigger measurement from PC
 
 ```python
 from bosch_plr.device import Device
@@ -51,42 +70,6 @@ if __name__ ==  '__main__':
 
 >>> info = {'date_code': '131', 'serial_number': ..., 'sw_revision': 2263, 'sw_version': '1.3.3', 'hw_version': '6.0.0', 'part_number': '...'}
 >>> distance = 47.318
-```
-
-### Trigger measurement from device
-
-```python
-from bosch_plr.device import Device
-from PyQt6.QtWidgets import QApplication
-from qasync import QEventLoop, asyncSlot
-import asyncio
-
-app = QApplication([])
-
-loop = QEventLoop(app)
-asyncio.set_event_loop(loop)
-
-def recive_measurement(data):
-    print(data)
-
-async def main():
-  device = Device()
-
-  device.received_measurement.connect(recive_measurement)
-
-  await device.connect('<mac-address of the device>')
-
-  await device.begin_receive()  # begin listening on device
-
-if __name__ ==  '__main__':
-    loop.run_until_complete(main())
-    
-    with loop:
-        loop.run_forever()
-
->>> {'id': 288, 'result': 4.001649856567383, 'component_1': 0.0, 'component_2': 0.0, 'mode': 'rear', 'units': 'metric', 'low_battery': False, 'temperature_warning': False, 'laser_on': False}
->>> {'id': 289, 'result': 3.888049840927124, 'component_1': 0.0, 'component_2': 0.0, 'mode': 'rear', 'units': 'metric', 'low_battery': False, 'temperature_warning': False, 'laser_on': False}
->>> ...
 ```
 
 ## Run sandbox

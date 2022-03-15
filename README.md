@@ -23,7 +23,7 @@ The interface taskes advantage of `async/await`.
 ```python
 from bosch_plr import Device
 
-@Device.run('00:13:43:c4:04:14')
+@Device.run('<mac-address of the device>')
 async def main(device: Device):
   for i in range(4):
     data = await device.user_measure()  # waits for the user to measure a distance with the device

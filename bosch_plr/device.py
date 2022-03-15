@@ -382,9 +382,10 @@ class Device(QObject):
                 async def program():
                     await device.connect(address, port)
                     await device.begin_receive()
+                    result = await fn(device, *args, **kwargs)
                     await device.disconnect()
                 
-                loop.run_until_complete(program())
+                return loop.run_until_complete(program())
 
             return runner
 

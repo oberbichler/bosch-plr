@@ -205,14 +205,14 @@ def parse_version(data):
     return f'{main}.{sub}.{bug}'
 
 def parse_info(data):
-    result = {}
+    result = DeviceInfo()
 
-    result['date_code'] = parse_str(data[:4])
-    result['serial_number'] = struct.unpack('I', data[4:8])[0]
-    result['sw_revision'] = struct.unpack('H', data[8:10])[0]
-    result['sw_version'] = parse_version(data[10:13])
-    result['hw_version'] = parse_version(data[13:16])
-    result['part_number'] = parse_str(data[16:29])
+    result.date_code = parse_str(data[:4])
+    result.serial_number = struct.unpack('I', data[4:8])[0]
+    result.sw_revision = struct.unpack('H', data[8:10])[0]
+    result.sw_version = parse_version(data[10:13])
+    result.hw_version = parse_version(data[13:16])
+    result.part_number = parse_str(data[16:29])
 
     return result
 
@@ -235,6 +235,15 @@ def request(msg):
         return wrapper
 
     return fn
+
+
+class DeviceInfo:
+    date_code: str
+    serial_number: int
+    sw_revision: int
+    sw_version: str
+    hw_version: str
+    part_number: str
 
 
 class ExchangeData:
